@@ -216,6 +216,30 @@ func TestRetrieveDecodesTypedResponse(t *testing.T) {
 	}
 }
 
+func TestPaginatedListReturnsItems(t *testing.T) {
+	// /calls and /webhooks/deliveries wrap results in an {items, total, ...}
+	// envelope; the SDK must return the items, not fail to decode the object.
+	ts := newTestServer(t)
+
+	ts.body = `{"items":[{"uuid":"call_1","status":"completed"}],"total":1,"limit":50,"offset":0}`
+	calls, err := ts.client.Calls.List(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Calls.List: %v", err)
+	}
+	if len(calls) != 1 || calls[0].UUID != "call_1" {
+		t.Fatalf("Calls.List = %+v, want one call call_1", calls)
+	}
+
+	ts.body = `{"items":[{"id":7,"event_type":"call.completed","status":"success"}],"total":1}`
+	deliveries, err := ts.client.Webhooks.Deliveries(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Webhooks.Deliveries: %v", err)
+	}
+	if len(deliveries) != 1 || deliveries[0].ID != 7 {
+		t.Fatalf("Webhooks.Deliveries = %+v, want one delivery id 7", deliveries)
+	}
+}
+
 func TestStartSessionAlwaysSendsBody(t *testing.T) {
 	ts := newTestServer(t)
 	if _, err := ts.client.Workflows.StartSession(context.Background(), "wf_1", nil); err != nil {

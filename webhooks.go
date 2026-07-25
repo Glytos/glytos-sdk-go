@@ -129,9 +129,11 @@ func (s *WebhooksService) Deliveries(ctx context.Context, params *WebhookDeliver
 			query.Set("offset", strconv.Itoa(*params.Offset))
 		}
 	}
-	var out []WebhookDelivery
-	err := s.client.do(ctx, "GET", "/webhooks/deliveries", nil, query, &out)
-	return out, err
+	var page struct {
+		Items []WebhookDelivery `json:"items"`
+	}
+	err := s.client.do(ctx, "GET", "/webhooks/deliveries", nil, query, &page)
+	return page.Items, err
 }
 
 // Redeliver re-sends a past webhook delivery.

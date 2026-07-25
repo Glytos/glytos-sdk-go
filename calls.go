@@ -26,11 +26,14 @@ func (s *CallsService) Create(ctx context.Context, body map[string]any) (*Call, 
 	return &out, err
 }
 
-// List returns calls. Pass nil for no filters.
+// List returns calls. Pass nil for no filters. The endpoint is paginated and
+// wraps results in an {items, ...} envelope; the items are returned here.
 func (s *CallsService) List(ctx context.Context, query url.Values) ([]Call, error) {
-	var out []Call
-	err := s.client.do(ctx, "GET", "/calls", nil, query, &out)
-	return out, err
+	var page struct {
+		Items []Call `json:"items"`
+	}
+	err := s.client.do(ctx, "GET", "/calls", nil, query, &page)
+	return page.Items, err
 }
 
 // Retrieve returns a call by uuid.
