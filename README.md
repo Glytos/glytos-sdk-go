@@ -70,6 +70,33 @@ client := glytos.New("gly_...",
 Every method takes a `context.Context` as its first argument, so you control
 timeouts and cancellation.
 
+### Text conversations
+
+An agent is one definition; nothing forces it to do both text and voice. For text,
+a thread holds the conversation and a run is one turn on it:
+
+```go
+thread, _ := client.Threads.Create(ctx, agentUUID, nil)
+reply, _ := client.Threads.Runs.Create(ctx, *thread, &glytos.TurnParams{
+    Content: "What are your opening hours?",
+})
+```
+
+Stream a long answer instead of waiting for it:
+
+```go
+err := client.Threads.Runs.Stream(ctx, *thread,
+    &glytos.TurnParams{Content: "Summarise the policy"},
+    func(event glytos.StreamEvent) error {
+        if event.Type == "token" {
+            fmt.Print(event.Delta)
+        }
+        return nil
+    })
+```
+
+Returning an error from the callback stops the stream.
+
 ## Resources
 
 | Namespace | Methods |

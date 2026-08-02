@@ -42,3 +42,32 @@ func (s *ChatService) Messages(ctx context.Context, params ChatMessagesParams) (
 	err := s.client.do(ctx, "POST", "/chat/messages", body, nil, &out)
 	return out, err
 }
+
+// Stream sends the same turn, delivering it as it is written. onEvent is called
+// for each event in order; returning an error from it stops the stream.
+func (s *ChatService) Stream(ctx context.Context, params ChatMessagesParams, onEvent func(StreamEvent) error) error {
+	body := map[string]any{"token": params.Token, "content": params.Content}
+	if params.SessionUUID != "" {
+		body["session_uuid"] = params.SessionUUID
+	}
+	if params.Images != nil {
+		body["images"] = params.Images
+	}
+	return s.client.Stream(ctx, "POST", "/chat/stream", body, onEvent)
+}
+
+// ChatFile is a file attached to one conversation.
+type ChatFile struct {
+	FileUUID   string `json:"file_uuid"`
+	Filename   string `json:"filename"`
+	Characters int    `json:"characters"`
+}
+
+// UploadFile attaches a file to one conversation. Its text is put in front of the
+// agent for that conversation only - it does not join the knowledge base.
+func (s *ChatService) UploadFile(ctx context.Context, token, sessionUUID, filename string, content []byte) (*ChatFile, error) {
+	var out ChatFile
+	err := s.client.UploadFile(ctx, "/chat/files",
+		map[string]string{"token": token, "session_uuid": sessionUUID}, filename, content, &out)
+	return &out, err
+}

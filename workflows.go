@@ -169,13 +169,20 @@ func (s *WorkflowsService) StartSession(ctx context.Context, workflowUUID string
 // SendMessage sends one user message to an existing session and returns that
 // turn's reply. Pass nil images to omit them.
 func (s *WorkflowsService) SendMessage(ctx context.Context, workflowUUID, sessionUUID, content string, images []string) (json.RawMessage, error) {
-	body := map[string]any{"content": content}
-	if images != nil {
-		body["images"] = images
-	}
+	return s.SendTurn(ctx, workflowUUID, sessionUUID, &TurnParams{Content: content, Images: images})
+}
+
+// SendTurn is SendMessage with the full turn, including per-turn Instructions.
+func (s *WorkflowsService) SendTurn(ctx context.Context, workflowUUID, sessionUUID string, params *TurnParams) (json.RawMessage, error) {
+	body := turnBody(params)
 	var out json.RawMessage
 	err := s.client.do(ctx, "POST", "/workflows/"+esc(workflowUUID)+"/sessions/"+esc(sessionUUID)+"/messages", body, nil, &out)
 	return out, err
+}
+
+// StreamMessage runs the same turn, delivering it as it is written.
+func (s *WorkflowsService) StreamMessage(ctx context.Context, workflowUUID, sessionUUID string, params *TurnParams, onEvent func(StreamEvent) error) error {
+	return s.client.Stream(ctx, "POST", "/workflows/"+esc(workflowUUID)+"/sessions/"+esc(sessionUUID)+"/messages/stream", turnBody(params), onEvent)
 }
 
 // RunText runs a one-shot text conversation (a list of {"role","content"}

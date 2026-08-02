@@ -30,3 +30,10 @@ func (s *VectorStoresService) Retrieve(ctx context.Context, vectorStoreUUID stri
 func (s *VectorStoresService) Delete(ctx context.Context, vectorStoreUUID string) error {
 	return s.client.do(ctx, "DELETE", "/vector-stores/"+esc(vectorStoreUUID), nil, nil, nil)
 }
+
+// UploadDocument adds a document file to a vector store, so an agent can search it.
+func (s *VectorStoresService) UploadDocument(ctx context.Context, vectorStoreUUID, filename string, content []byte) (*Document, error) {
+	var out Document
+	err := s.client.UploadFile(ctx, "/vector-stores/"+esc(vectorStoreUUID)+"/documents/upload", nil, filename, content, &out)
+	return &out, err
+}

@@ -74,6 +74,14 @@ type Client struct {
 
 	// Workflows manages agents (prompt agents and visual workflows).
 	Workflows *WorkflowsService
+	// Agents is the same service as Workflows, under the word the product uses.
+	Agents *WorkflowsService
+	// Threads holds text conversations: a thread per conversation, a run per turn.
+	Threads *ThreadsService
+	// Folders groups agents inside an environment.
+	Folders *FoldersService
+	// Imports brings an agent over from another platform.
+	Imports *ImportsService
 	// Calls manages phone and web calls.
 	Calls *CallsService
 	// PhoneNumbers manages telephony numbers and providers.
@@ -141,6 +149,14 @@ func New(apiKey string, opts ...Option) *Client {
 	}
 
 	c.Workflows = &WorkflowsService{client: c}
+	c.Agents = c.Workflows
+	c.Threads = &ThreadsService{
+		client:   c,
+		Messages: &ThreadMessagesService{client: c},
+		Runs:     &ThreadRunsService{client: c},
+	}
+	c.Folders = &FoldersService{client: c}
+	c.Imports = &ImportsService{client: c}
 	c.Calls = &CallsService{client: c}
 	c.PhoneNumbers = &PhoneNumbersService{client: c}
 	c.Campaigns = &CampaignsService{client: c}

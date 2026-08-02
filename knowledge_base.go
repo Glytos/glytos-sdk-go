@@ -66,3 +66,10 @@ func (s *KnowledgeBaseService) Search(ctx context.Context, params SearchParams) 
 	err := s.client.do(ctx, "POST", "/knowledge-base/search", body, nil, &out)
 	return out, err
 }
+
+// UploadDocument uploads a document file (txt, md, pdf) instead of pasting its text.
+func (s *KnowledgeBaseService) UploadDocument(ctx context.Context, filename string, content []byte) (*Document, error) {
+	var out Document
+	err := s.client.UploadFile(ctx, "/knowledge-base/documents/upload", nil, filename, content, &out)
+	return &out, err
+}

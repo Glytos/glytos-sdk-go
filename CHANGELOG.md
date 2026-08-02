@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file. The format is b
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `Threads` - text conversations: `Threads.Create/Retrieve`,
+  `Threads.Messages.Create/List`, `Threads.Runs.Create/Stream`.
+- Streaming via a callback: `Threads.Runs.Stream`, `Workflows.StreamMessage` and
+  `Chat.Stream` deliver `token` deltas and a terminal `done`.
+- `TurnParams.Instructions` - extra context for one turn only.
+- File uploads: `Chat.UploadFile`, `KnowledgeBase.UploadDocument`,
+  `VectorStores.UploadDocument`, plus `Client.UploadFile` for any other endpoint.
+- `Folders` and `Imports` services.
+- `Agents` as an alias of `Workflows`.
+
 ## [0.1.0] - 2026-07-25
 
 ### Added
