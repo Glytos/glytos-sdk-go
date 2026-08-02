@@ -6,9 +6,11 @@
 
 The official [Glytos](https://glytos.com) server SDK for Go.
 
-Call the Glytos API from your backend with an API key: build and run voice agents,
-start phone calls, mint browser web-call tokens, manage phone numbers, and verify
-webhooks. Zero dependencies (standard library only), fully typed, context-aware.
+Call the Glytos API from your backend with an API key. Build agents once and run
+them as **text** or as **voice**: hold a threaded conversation, stream a reply as it
+is written, place phone calls, mint browser web-call tokens, manage numbers, and
+verify webhooks. Zero dependencies (standard library only), fully typed,
+context-aware.
 
 > Never ship an API key to the browser. For in-browser voice, use the `@glytos/web`
 > package with a short-lived token you mint here via `client.Calls.WebToken(...)`.
@@ -101,17 +103,31 @@ Returning an error from the callback stops the stream.
 
 | Namespace | Methods |
 | --- | --- |
-| `client.Workflows` | `List`, `Retrieve`, `Create`, `Rename`, `Duplicate`, `Archive`, `Unarchive`, `Promote`, `Versions`, `UpdateDefinition`, `UpdateConfig`, `Publish`, `Delete`, `Templates`, `StartSession`, `SendMessage`, `RunText`, `Session`, `SessionEvents` |
+| `client.Agents` (alias `Workflows`) | `List`, `Retrieve`, `Create`, `Rename`, `Duplicate`, `Archive`, `Unarchive`, `Promote`, `Versions`, `UpdateDefinition`, `UpdateConfig`, `Publish`, `Delete`, `Templates`, `Export`, `MoveToFolder`, `RemoveFromFolder`, `StartSession`, `SendMessage`, `StreamMessage`, `RunText`, `Session`, `SessionEvents` |
+| `client.Threads` | `Create`, `Retrieve`, `Messages.Create`, `Messages.List`, `Runs.Create`, `Runs.Stream` |
+| `client.Folders` | `List`, `Create`, `Rename`, `Delete` |
+| `client.Imports` | `Sources`, `Create`, `Assistant` |
 | `client.Calls` | `Create`, `List`, `Retrieve`, `WebToken`, `Control` |
 | `client.PhoneNumbers` | `Search`, `List`, `Providers`, `Provision`, `ImportNumber`, `Instant`, `Assign`, `Release` |
 | `client.Campaigns` | `List`, `Create`, `Retrieve`, `Start`, `SyncContacts` |
 | `client.Sessions` | `List` |
 | `client.Webhooks` | `List`, `Create`, `Update`, `Delete`, `Events`, `Deliveries`, `Redeliver`, `Verify` |
-| `client.Chat` | `Token`, `Messages` |
+| `client.Chat` | `Token`, `Messages`, `Stream`, `UploadFile` |
 | `client.Tools` | `List`, `Create`, `Update`, `Delete` |
-| `client.KnowledgeBase` | `ListDocuments`, `CreateDocument`, `Search` |
-| `client.VectorStores` | `List`, `Create`, `Retrieve`, `Delete` |
+| `client.KnowledgeBase` | `ListDocuments`, `CreateDocument`, `UploadDocument`, `Search` |
+| `client.VectorStores` | `List`, `Create`, `Retrieve`, `Delete`, `UploadDocument` |
 | `client.Analytics` | `Overview` |
+
+`Agents` and `Workflows` are the same service under two names: the product calls
+them agents, the API path is `/workflows`. Either works.
+
+### Text and voice are separate
+
+An agent is one definition. Nothing forces it to do both:
+
+- A **text** agent needs only `Threads` (or `Chat` for a browser widget).
+- A **voice** agent adds `Calls`, `PhoneNumbers` and `Campaigns`.
+- The same agent can do both, if you want it to.
 
 Any endpoint without a dedicated helper is one call away with `client.Do`:
 

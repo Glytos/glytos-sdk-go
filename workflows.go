@@ -81,6 +81,29 @@ func (s *WorkflowsService) Rename(ctx context.Context, workflowUUID, name string
 	return &out, err
 }
 
+// Export returns an agent as portable, secret-free JSON. It imports back through
+// Imports.Create(ctx, "glytos", ...), on this account or another.
+func (s *WorkflowsService) Export(ctx context.Context, workflowUUID string) (map[string]any, error) {
+	var out map[string]any
+	err := s.client.do(ctx, "GET", "/workflows/"+esc(workflowUUID)+"/export", nil, nil, &out)
+	return out, err
+}
+
+// MoveToFolder files an agent into a folder. Both must be in the same environment.
+func (s *WorkflowsService) MoveToFolder(ctx context.Context, workflowUUID, folderUUID string) (*Workflow, error) {
+	var out Workflow
+	err := s.client.do(ctx, "PATCH", "/workflows/"+esc(workflowUUID), map[string]any{"folder_uuid": folderUUID}, nil, &out)
+	return &out, err
+}
+
+// RemoveFromFolder takes an agent out of its folder, leaving it ungrouped.
+func (s *WorkflowsService) RemoveFromFolder(ctx context.Context, workflowUUID string) (*Workflow, error) {
+	var out Workflow
+	// Sent as null is what unfiles it; not sent at all would leave it where it is.
+	err := s.client.do(ctx, "PATCH", "/workflows/"+esc(workflowUUID), map[string]any{"folder_uuid": nil}, nil, &out)
+	return &out, err
+}
+
 // Duplicate copies an agent and returns the new copy.
 func (s *WorkflowsService) Duplicate(ctx context.Context, workflowUUID string) (*Workflow, error) {
 	var out Workflow

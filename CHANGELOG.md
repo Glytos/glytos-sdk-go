@@ -15,7 +15,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `TurnParams.Instructions` - extra context for one turn only.
 - File uploads: `Chat.UploadFile`, `KnowledgeBase.UploadDocument`,
   `VectorStores.UploadDocument`, plus `Client.UploadFile` for any other endpoint.
-- `Folders` and `Imports` services.
+- `Folders` and `Imports` services, plus `Agents.MoveToFolder` /
+  `Agents.RemoveFromFolder` to file an agent and `Agents.Export` for the
+  portable, secret-free JSON that imports back.
 - `Agents` as an alias of `Workflows`.
 
 ## [0.1.0] - 2026-07-25

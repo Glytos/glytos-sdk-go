@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -192,6 +193,42 @@ func TestFoldersAndImports(t *testing.T) {
 	}
 	if !strings.HasPrefix(paths[1], "DELETE") || !strings.HasSuffix(paths[1], "/agent-folders/fld_1") {
 		t.Fatalf("delete = %q", paths[1])
+	}
+}
+
+func TestAgentExportAndFolderFiling(t *testing.T) {
+	var paths []string
+	var raw []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path)
+		buf := new(strings.Builder)
+		_, _ = io.Copy(buf, r.Body)
+		raw = append(raw, buf.String())
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	client := New("gly_test", WithBaseURL(server.URL))
+	ctx := context.Background()
+	if _, err := client.Agents.Export(ctx, "wf_1"); err != nil {
+		t.Fatalf("export: %v", err)
+	}
+	if _, err := client.Agents.MoveToFolder(ctx, "wf_1", "fld_1"); err != nil {
+		t.Fatalf("move: %v", err)
+	}
+	if _, err := client.Agents.RemoveFromFolder(ctx, "wf_1"); err != nil {
+		t.Fatalf("unfile: %v", err)
+	}
+
+	if !strings.HasPrefix(paths[0], "GET") || !strings.HasSuffix(paths[0], "/workflows/wf_1/export") {
+		t.Fatalf("export path = %q", paths[0])
+	}
+	if !strings.Contains(raw[1], `"folder_uuid":"fld_1"`) {
+		t.Fatalf("move body = %q", raw[1])
+	}
+	// Sent as null is what unfiles an agent; not sent would leave it where it is.
+	if !strings.Contains(raw[2], `"folder_uuid":null`) {
+		t.Fatalf("unfile body = %q", raw[2])
 	}
 }
 
