@@ -251,6 +251,24 @@ func TestDncScopeAndRemovalCarryThePhoneNumberIntact(t *testing.T) {
 	}
 }
 
+func TestDncSendsAnEmptyReasonRatherThanNull(t *testing.T) {
+	// The server takes a plain string, not a nullable one, so a null is a 422.
+	// A plain Go string cannot be null, which is why reason is not a pointer.
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"d1","phone":"+15551230001"}`
+
+	if _, err := ts.client.Dnc.Add(context.Background(), "+15551230001", ""); err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["reason"] != "" {
+		t.Fatalf("expected an empty reason, got %v", body["reason"])
+	}
+}
+
 func TestDncImportReportsWhatItDid(t *testing.T) {
 	ts := newTestServer(t)
 	ts.body = `{"added":8,"duplicates":1,"rejected":2}`
