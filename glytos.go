@@ -88,6 +88,8 @@ type Client struct {
 	PhoneNumbers *PhoneNumbersService
 	// Campaigns manages outbound calling campaigns.
 	Campaigns *CampaignsService
+	// Dnc manages the numbers your organization must not call.
+	Dnc *DncService
 	// Sessions lists sessions across agents.
 	Sessions *SessionsService
 	// Webhooks manages webhook endpoints, deliveries, and signature verification.
@@ -160,6 +162,7 @@ func New(apiKey string, opts ...Option) *Client {
 	c.Calls = &CallsService{client: c}
 	c.PhoneNumbers = &PhoneNumbersService{client: c}
 	c.Campaigns = &CampaignsService{client: c}
+	c.Dnc = &DncService{client: c}
 	c.Sessions = &SessionsService{client: c}
 	c.Webhooks = &WebhooksService{client: c}
 	c.Chat = &ChatService{client: c}

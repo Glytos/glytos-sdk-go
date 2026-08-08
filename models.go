@@ -63,9 +63,63 @@ type WebhookDelivery struct {
 
 // Campaign is an outbound calling campaign over a phone number.
 type Campaign struct {
-	UUID   string `json:"uuid"`
-	Name   string `json:"name"`
+	UUID         string `json:"uuid"`
+	Name         string `json:"name"`
+	WorkflowUUID string `json:"workflow_uuid,omitempty"`
+	FromNumber   string `json:"from_number,omitempty"`
+	// Status is one of draft, scheduled, running, waiting, stopped, completed,
+	// halted, out_of_credit, failed.
 	Status string `json:"status,omitempty"`
+	// StatusDetail says why a campaign stopped somewhere other than the end of
+	// its list, so "halted" and "out_of_credit" are actionable.
+	StatusDetail string `json:"status_detail,omitempty"`
+	ScheduledAt  string `json:"scheduled_at,omitempty"`
+	StartedAt    string `json:"started_at,omitempty"`
+	FinishedAt   string `json:"finished_at,omitempty"`
+	// CallWindowStart and CallWindowEnd bound dialing, read in Timezone.
+	CallWindowStart        string `json:"call_window_start,omitempty"`
+	CallWindowEnd          string `json:"call_window_end,omitempty"`
+	Timezone               string `json:"timezone,omitempty"`
+	SuppressionPolicy      string `json:"suppression_policy,omitempty"`
+	OverrideCallerRequests bool   `json:"override_caller_requests,omitempty"`
+}
+
+// CampaignContact is one dial target and what became of it.
+type CampaignContact struct {
+	Phone string `json:"phone"`
+	// Status is one of pending, dialing, answered, voicemail, no_answer,
+	// failed, suppressed. Busy is not reported separately from no_answer: it
+	// needs per-carrier callbacks the platform does not collect.
+	Status string `json:"status"`
+	// CallSID is the carrier's own id for the call.
+	CallSID string `json:"call_sid,omitempty"`
+	// Error is the carrier's own words when it refused the number.
+	Error string `json:"error,omitempty"`
+	// SessionUUID is the conversation this contact produced, if it answered.
+	SessionUUID string `json:"session_uuid,omitempty"`
+	// Variables are the contact's other CSV columns, which reach the agent's
+	// prompt, so {{name}} means this person.
+	Variables map[string]string `json:"variables,omitempty"`
+}
+
+// CampaignDetail is a campaign with its contact list.
+type CampaignDetail struct {
+	Campaign
+	Contacts []CampaignContact `json:"contacts"`
+}
+
+// DncEntry is a number this organization must not call.
+type DncEntry struct {
+	UUID  string `json:"uuid"`
+	Phone string `json:"phone"`
+	// Source is how it got here: agent (the person asked on a call), manual,
+	// import or api.
+	Source string `json:"source"`
+	// Scope is how far it reaches: "all" or "marketing".
+	Scope         string `json:"scope"`
+	Reason        string `json:"reason,omitempty"`
+	LastMatchedAt string `json:"last_matched_at,omitempty"`
+	CreatedAt     string `json:"created_at,omitempty"`
 }
 
 // Tool is a reusable tool an agent can call (kind = http / static / mcp).

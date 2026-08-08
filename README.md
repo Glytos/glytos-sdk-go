@@ -109,7 +109,8 @@ Returning an error from the callback stops the stream.
 | `client.Imports` | `Sources`, `Create`, `Assistant` |
 | `client.Calls` | `Create`, `List`, `Retrieve`, `WebToken`, `Control` |
 | `client.PhoneNumbers` | `Search`, `List`, `Providers`, `Provision`, `ImportNumber`, `Instant`, `Assign`, `Release` |
-| `client.Campaigns` | `List`, `Create`, `Retrieve`, `Start`, `SyncContacts` |
+| `client.Campaigns` | `List`, `Create`, `Retrieve`, `Start`, `Stop`, `Delete`, `AddContacts`, `SyncContacts`, `PreviewSuppression` |
+| `client.Dnc` | `List`, `Add`, `Import`, `SetScope`, `Remove` |
 | `client.Sessions` | `List` |
 | `client.Webhooks` | `List`, `Create`, `Update`, `Delete`, `Events`, `Deliveries`, `Redeliver`, `Verify` |
 | `client.Chat` | `Token`, `Messages`, `Stream`, `UploadFile` |
@@ -144,6 +145,54 @@ agents, err := client.Workflows.List(ctx, &glytos.WorkflowListParams{
 	Archived:    glytos.Bool(true),
 	Environment: "prod",
 })
+```
+
+## Outbound calling
+
+A campaign dials a list of contacts with one agent. Upload the list as CSV text:
+the phone column is found by its header or by which column holds phone numbers,
+and every other column travels with that contact, so `{{name}}` in the agent's
+prompt means the person being called.
+
+```go
+csv, err := os.ReadFile("leads.csv")
+if err != nil {
+	return err
+}
+campaign, err := client.Campaigns.Create(ctx, glytos.CampaignCreateParams{
+	Name:            "March outreach",
+	WorkflowUUID:    agent.UUID,
+	FromNumber:      "+15551230000", // must be a number you have connected
+	ContactsCSV:     string(csv),
+	ScheduledAt:     "2026-03-01T09:00:00Z",
+	CallWindowStart: "09:00",
+	CallWindowEnd:   "20:00",
+	Timezone:        "Europe/Istanbul",
+})
+```
+
+Left unscheduled, a campaign stays a draft until `Start`. `Stop` ends it at the
+next contact, leaving the undialed ones ready to resume. `Retrieve` returns each
+contact's outcome and, where one answered, the session it produced.
+
+Every outbound call is checked against your do-not-call list first, whether it
+comes from a campaign or from `Calls.Create`. Agents add to that list themselves
+when someone asks not to be contacted again:
+
+```go
+_, err := client.Dnc.Add(ctx, "+15551230000", "asked on a call")
+```
+
+A campaign chooses how much of the list applies. The default, `strict`, honours
+all of it. `transactional` still calls people who only refused marketing, which
+is what you want for a call about someone's own order. `ignore` skips entries
+your organization added for itself, but requests people made on a call still
+apply unless you also set `OverrideCallerRequests`. Measure before you choose:
+
+```go
+preview, err := client.Campaigns.PreviewSuppression(ctx, nil, string(csv))
+fmt.Println(preview.ReachedIfStrict, "of", preview.Contacts,
+	"reachable;", preview.CallerRequested, "asked us not to call")
 ```
 
 ## Errors
