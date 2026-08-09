@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file. The format is b
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-09
+
+### Added
+
+- `Dnc` - the numbers your organization must not call: `Dnc.List`, `Dnc.Add`,
+  `Dnc.Import`, `Dnc.SetScope`, `Dnc.Remove`. Every outbound call is checked
+  against this list, whether it comes from a campaign or from `Calls.Create`.
+- `Campaigns.Stop`, `Campaigns.Delete` and `Campaigns.AddContacts` (upload a
+  contact list as CSV text rather than serving it over HTTP).
+- `Campaigns.PreviewSuppression` - how many of a contact list each suppression
+  policy would reach, including how many of those people asked on a call not to
+  be contacted again.
+- `CampaignCreateParams` gained `ContactsCSV`, `ScheduledAt`, `CallWindowStart`
+  /`CallWindowEnd`, `Timezone`, `SuppressionPolicy` and `OverrideCallerRequests`.
+- `CampaignDetail`, `CampaignContact`, `SuppressionPreview`, `ContactSyncResult`
+  and `DncEntry` types. `Campaign` gained its scheduling, calling-window and
+  suppression fields.
+
+### Changed
+
+- `Campaigns.Retrieve` returns `*CampaignDetail`, and `Campaigns.SyncContacts`
+  returns `*ContactSyncResult`, rather than the untyped shapes they had before.
+
+### Fixed
+
+- `CampaignCreateParams.Contacts` was `[]map[string]any`, which the API rejects
+  with a 422. It is a `[]string` of phone numbers.
+
 ## [0.2.0] - 2026-08-02
 
 ### Added
