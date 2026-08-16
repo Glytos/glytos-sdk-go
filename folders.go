@@ -54,6 +54,22 @@ func (s *ImportsService) Create(ctx context.Context, source string, payload map[
 	return out, err
 }
 
+// Connect lists what is on the other platform, using its API key. The key is
+// used for this request and is never stored.
+func (s *ImportsService) Connect(ctx context.Context, source, apiKey string) (map[string]any, error) {
+	var out map[string]any
+	err := s.client.do(ctx, "POST", "/imports/"+esc(source)+"/connect", map[string]any{"api_key": apiKey}, nil, &out)
+	return out, err
+}
+
+// Pull brings over the agents picked from Connect.
+func (s *ImportsService) Pull(ctx context.Context, source, apiKey string, agentIDs []string) (map[string]any, error) {
+	body := map[string]any{"api_key": apiKey, "agent_ids": agentIDs}
+	var out map[string]any
+	err := s.client.do(ctx, "POST", "/imports/"+esc(source)+"/pull", body, nil, &out)
+	return out, err
+}
+
 // Assistant brings over an assistant definition, tools and all.
 func (s *ImportsService) Assistant(ctx context.Context, assistant map[string]any) (map[string]any, error) {
 	var out map[string]any

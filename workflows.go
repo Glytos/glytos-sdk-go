@@ -24,6 +24,8 @@ type WorkflowCreateParams struct {
 	Name string
 	// Mode is "prompt" (default) or "workflow".
 	Mode string
+	// PrimaryChannel is "voice" (default) or "chat".
+	PrimaryChannel string
 	// Config is the optional initial agent config.
 	Config map[string]any
 }
@@ -66,6 +68,9 @@ func (s *WorkflowsService) Create(ctx context.Context, params WorkflowCreatePara
 		mode = "prompt"
 	}
 	body := map[string]any{"name": params.Name, "mode": mode}
+	if params.PrimaryChannel != "" {
+		body["primary_channel"] = params.PrimaryChannel
+	}
 	if params.Config != nil {
 		body["config"] = params.Config
 	}

@@ -106,18 +106,27 @@ Returning an error from the callback stops the stream.
 | `client.Agents` (alias `Workflows`) | `List`, `Retrieve`, `Create`, `Rename`, `Duplicate`, `Archive`, `Unarchive`, `Promote`, `Versions`, `UpdateDefinition`, `UpdateConfig`, `Publish`, `Delete`, `Templates`, `Export`, `MoveToFolder`, `RemoveFromFolder`, `StartSession`, `SendMessage`, `StreamMessage`, `RunText`, `Session`, `SessionEvents` |
 | `client.Threads` | `Create`, `Retrieve`, `Messages.Create`, `Messages.List`, `Runs.Create`, `Runs.Stream` |
 | `client.Folders` | `List`, `Create`, `Rename`, `Delete` |
-| `client.Imports` | `Sources`, `Create`, `Assistant` |
-| `client.Calls` | `Create`, `List`, `Retrieve`, `WebToken`, `Control` |
+| `client.Imports` | `Sources`, `Create`, `Connect`, `Pull`, `Assistant` |
+| `client.Calls` | `Create`, `List`, `Retrieve`, `WebToken`, `Control`, `Say`, `Transfer`, `End` |
 | `client.PhoneNumbers` | `Search`, `List`, `Providers`, `Provision`, `ImportNumber`, `Instant`, `Assign`, `Release` |
+| `client.SipTrunks` | `Presets`, `List`, `Create`, `Update`, `Delete`, `Test` |
 | `client.Campaigns` | `List`, `Create`, `Retrieve`, `Start`, `Stop`, `Delete`, `AddContacts`, `SyncContacts`, `PreviewSuppression` |
 | `client.Dnc` | `List`, `Add`, `Import`, `SetScope`, `Remove` |
+| `client.Integrations` | `List`, `Run`, `Connections.List`, `Connections.Create`, `Connections.Update`, `Connections.Delete`, `Connections.Run` |
+| `client.Automations` | `List`, `Create`, `Update`, `Delete`, `Runs`, `Test` |
+| `client.TestSuites` | `List`, `Create`, `Delete`, `Run` |
 | `client.Sessions` | `List` |
 | `client.Webhooks` | `List`, `Create`, `Update`, `Delete`, `Events`, `Deliveries`, `Redeliver`, `Verify` |
 | `client.Chat` | `Token`, `Messages`, `Stream`, `UploadFile` |
-| `client.Tools` | `List`, `Create`, `Update`, `Delete` |
-| `client.KnowledgeBase` | `ListDocuments`, `CreateDocument`, `UploadDocument`, `Search` |
+| `client.Tools` | `List`, `Create`, `Update`, `Delete`, `DiscoverMCP` |
+| `client.KnowledgeBase` | `ListDocuments`, `CreateDocument`, `UploadDocument`, `RetrieveDocument`, `DeleteDocument`, `Search` |
 | `client.VectorStores` | `List`, `Create`, `Retrieve`, `Delete`, `UploadDocument` |
 | `client.Analytics` | `Overview` |
+| `client.Billing` | `Credits`, `Transactions`, `Usage` |
+| `client.Environments` | `List` |
+| `client.Providers` | `List`, `Resources` |
+| `client.APIKeys` | `List`, `Create`, `Delete` |
+| `client.Organizations` | `Retrieve`, `Update`, `Regions` |
 
 `Agents` and `Workflows` are the same service under two names: the product calls
 them agents, the API path is `/workflows`. Either works.

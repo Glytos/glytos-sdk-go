@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file. The format is b
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `SipTrunks` - connect a carrier directly over SIP, with no third party in
+  between: `Presets`, `List`, `Create`, `Update`, `Delete`, `Test`. Numbers are
+  attached to a registered trunk through `PhoneNumbers.ImportNumber`, whose
+  params gained `SipTrunkUUID`.
+- `Integrations` and `Integrations.Connections` - the destinations an agent or an
+  automation can act on, and the named connections holding their credentials.
+- `Automations` - fire an integration action when an event happens: `List`,
+  `Create`, `Update`, `Delete`, `Runs`, `Test`.
+- `TestSuites` - `List`, `Create`, `Delete`, `Run`.
+- `Billing` - `Credits`, `Transactions`, `Usage`. Checking the balance before a
+  long outbound run no longer needs a raw `Do` call.
+- `Environments.List`, `Providers.List`, `Providers.Resources`, `APIKeys.List`
+  /`Create`/`Delete`, `Organizations.Retrieve`/`Update`/`Regions`.
+- `KnowledgeBase.RetrieveDocument` and `KnowledgeBase.DeleteDocument`. Documents
+  could be created and listed but never read back or removed.
+- `Tools.DiscoverMCP` - ask an MCP server what it publishes, instead of
+  transcribing its schema by hand.
+- `Imports.Connect` and `Imports.Pull` - list the agents on another platform with
+  its API key, then bring over the ones you pick. The key is never stored.
+- `Calls.Say`, `Calls.Transfer` and `Calls.End`, which spell out what each
+  control action requires. `Calls.Control` still takes a raw map.
+- `WorkflowCreateParams.PrimaryChannel`.
+
+### Fixed
+
+- `ToolsService` documented `kind` as http / static / mcp. The API has accepted
+  `code`, `integration` and `client` since they shipped, and the doc comment now
+  says what each of the six does.
+
 ## [0.3.0] - 2026-08-09
 
 ### Added

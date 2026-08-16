@@ -86,6 +86,8 @@ type Client struct {
 	Calls *CallsService
 	// PhoneNumbers manages telephony numbers and providers.
 	PhoneNumbers *PhoneNumbersService
+	// SipTrunks manages BYO SIP trunks, for connecting a carrier directly.
+	SipTrunks *SipTrunksService
 	// Campaigns manages outbound calling campaigns.
 	Campaigns *CampaignsService
 	// Dnc manages the numbers your organization must not call.
@@ -104,6 +106,22 @@ type Client struct {
 	VectorStores *VectorStoresService
 	// Analytics exposes usage and activity analytics.
 	Analytics *AnalyticsService
+	// Integrations manages third-party destinations and their connections.
+	Integrations *IntegrationsService
+	// Automations fire an integration action when an event happens.
+	Automations *AutomationsService
+	// TestSuites replays saved conversations against an agent.
+	TestSuites *TestSuitesService
+	// Billing exposes the credit balance, the ledger and usage.
+	Billing *BillingService
+	// Environments lists Development, Staging and Production.
+	Environments *EnvironmentsService
+	// Providers exposes the model, transcriber and voice catalog.
+	Providers *ProvidersService
+	// APIKeys manages keys for calling this API.
+	APIKeys *APIKeysService
+	// Organizations exposes this key's organization and the available regions.
+	Organizations *OrganizationsService
 }
 
 // Option configures a Client. Pass options to New.
@@ -161,6 +179,7 @@ func New(apiKey string, opts ...Option) *Client {
 	c.Imports = &ImportsService{client: c}
 	c.Calls = &CallsService{client: c}
 	c.PhoneNumbers = &PhoneNumbersService{client: c}
+	c.SipTrunks = &SipTrunksService{client: c}
 	c.Campaigns = &CampaignsService{client: c}
 	c.Dnc = &DncService{client: c}
 	c.Sessions = &SessionsService{client: c}
@@ -170,6 +189,17 @@ func New(apiKey string, opts ...Option) *Client {
 	c.KnowledgeBase = &KnowledgeBaseService{client: c}
 	c.VectorStores = &VectorStoresService{client: c}
 	c.Analytics = &AnalyticsService{client: c}
+	c.Integrations = &IntegrationsService{
+		client:      c,
+		Connections: &IntegrationConnectionsService{client: c},
+	}
+	c.Automations = &AutomationsService{client: c}
+	c.TestSuites = &TestSuitesService{client: c}
+	c.Billing = &BillingService{client: c}
+	c.Environments = &EnvironmentsService{client: c}
+	c.Providers = &ProvidersService{client: c}
+	c.APIKeys = &APIKeysService{client: c}
+	c.Organizations = &OrganizationsService{client: c}
 	return c
 }
 

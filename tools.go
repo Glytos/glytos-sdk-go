@@ -2,14 +2,20 @@ package glytos
 
 import "context"
 
-// ToolsService manages reusable tools an agent can call (kind = http / static / mcp).
+// ToolsService manages reusable tools an agent can call.
+//
+// Kind is one of "static", "http", "mcp", "code", "integration" or "client". An
+// integration tool names its connection in Config, so the model fills in
+// arguments but never chooses the destination. A code tool runs only in an
+// operator-configured sandbox, and a client tool is resolved by the browser
+// during a web call, so both are inert unless that side is set up.
 type ToolsService struct{ client *Client }
 
 // ToolCreateParams are the fields for ToolsService.Create.
 type ToolCreateParams struct {
 	// Name is the tool name (required).
 	Name string
-	// Kind is "http", "static", or "mcp" (required).
+	// Kind is one of static, http, mcp, code, integration, client (required).
 	Kind string
 	// Description is an optional human description.
 	Description string
@@ -79,4 +85,19 @@ func (s *ToolsService) Update(ctx context.Context, toolUUID string, params ToolU
 // Delete deletes a tool.
 func (s *ToolsService) Delete(ctx context.Context, toolUUID string) error {
 	return s.client.do(ctx, "DELETE", "/tools/"+esc(toolUUID), nil, nil, nil)
+}
+
+// DiscoverMCP asks an MCP server what it publishes, so a tool can be built from
+// the server's own schema rather than one transcribed by hand. headers may be
+// nil. It returns the tool list itself, not the response envelope.
+func (s *ToolsService) DiscoverMCP(ctx context.Context, serverURL string, headers map[string]string) ([]McpTool, error) {
+	body := map[string]any{"server_url": serverURL}
+	if headers != nil {
+		body["headers"] = headers
+	}
+	var out struct {
+		Tools []McpTool `json:"tools"`
+	}
+	err := s.client.do(ctx, "POST", "/tools/mcp/discover", body, nil, &out)
+	return out.Tools, err
 }

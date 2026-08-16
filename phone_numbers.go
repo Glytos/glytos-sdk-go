@@ -21,6 +21,11 @@ type ImportNumberParams struct {
 	Credentials map[string]any
 	// WorkflowUUID assigns the imported number to an agent.
 	WorkflowUUID string
+	// SipTrunkUUID attaches the number to a BYO SIP trunk instead of a carrier
+	// account. There is nowhere to look the number up in that case, so the
+	// trunk's registration is the ownership proof, and the import is accepted
+	// only once it has registered.
+	SipTrunkUUID string
 }
 
 // Search searches carrier inventory for available numbers.
@@ -70,6 +75,9 @@ func (s *PhoneNumbersService) ImportNumber(ctx context.Context, params ImportNum
 	}
 	if params.WorkflowUUID != "" {
 		body["workflow_uuid"] = params.WorkflowUUID
+	}
+	if params.SipTrunkUUID != "" {
+		body["sip_trunk_uuid"] = params.SipTrunkUUID
 	}
 	var out PhoneNumber
 	err := s.client.do(ctx, "POST", "/telephony/numbers/import", body, nil, &out)

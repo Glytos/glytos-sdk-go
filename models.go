@@ -126,13 +126,231 @@ type DncEntry struct {
 type Tool struct {
 	UUID string `json:"uuid"`
 	Name string `json:"name"`
+	// Kind is one of static, http, mcp, code, integration, client.
 	Kind string `json:"kind"`
+}
+
+// McpTool is one tool an MCP server publishes, as discovered from the server.
+type McpTool struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
 }
 
 // Document is a knowledge-base document.
 type Document struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+	// Content is returned when a single document is retrieved, not when listing.
+	Content string `json:"content,omitempty"`
+	Status  string `json:"status,omitempty"`
+}
+
+// SipTrunk is a BYO SIP trunk registered with a carrier.
+type SipTrunk struct {
+	UUID      string `json:"uuid"`
+	Name      string `json:"name"`
+	Preset    string `json:"preset"`
+	SipServer string `json:"sip_server"`
+	SipPort   int    `json:"sip_port"`
+	Transport string `json:"transport"`
+	Username  string `json:"username"`
+	// Status is registered, pending or failed. Only a registered trunk takes calls.
+	Status           string `json:"status,omitempty"`
+	StatusDetail     string `json:"status_detail,omitempty"`
+	LastRegisteredAt string `json:"last_registered_at,omitempty"`
+	NumberCount      int    `json:"number_count,omitempty"`
+}
+
+// SipPreset is a carrier whose connection settings are already known, so only
+// the login has to be supplied.
+type SipPreset struct {
+	Key       string `json:"key"`
+	Name      string `json:"name"`
+	SipServer string `json:"sip_server"`
+	SipPort   int    `json:"sip_port"`
+	Transport string `json:"transport"`
+	Country   string `json:"country"`
+	// Verified says whether these settings have been confirmed against the live
+	// carrier, rather than taken from its documentation.
+	Verified bool   `json:"verified"`
+	Note     string `json:"note"`
+}
+
+// SipTrunkTest is the result of re-checking a trunk against its carrier.
+type SipTrunkTest struct {
+	OK     bool   `json:"ok"`
+	Detail string `json:"detail"`
+	// Reachable separates "the carrier refused these credentials" from "nobody
+	// answered". Only the first is worth changing the password over.
+	Reachable bool `json:"reachable,omitempty"`
+}
+
+// TestSuite is a set of saved conversations replayed against one agent.
+type TestSuite struct {
+	UUID         string           `json:"uuid"`
+	WorkflowUUID string           `json:"workflow_uuid"`
+	Name         string           `json:"name"`
+	Cases        []map[string]any `json:"cases"`
+}
+
+// TestSuiteRun is the outcome of running every case in a suite.
+type TestSuiteRun struct {
+	SuiteUUID   string           `json:"suite_uuid"`
+	Passed      bool             `json:"passed"`
+	Total       int              `json:"total"`
+	PassedCount int              `json:"passed_count"`
+	Results     []map[string]any `json:"results"`
+}
+
+// Integration is a third-party destination the platform can act on.
+type Integration struct {
+	Key                 string           `json:"key"`
+	Name                string           `json:"name"`
+	RequiredCredentials []string         `json:"required_credentials"`
+	PublicCredentials   []string         `json:"public_credentials,omitempty"`
+	SupportsAutomation  bool             `json:"supports_automation,omitempty"`
+	Actions             []map[string]any `json:"actions"`
+}
+
+// IntegrationConnection is one configured destination. An organization can hold
+// several per integration, so an agent or automation names the connection.
+type IntegrationConnection struct {
+	UUID           string `json:"uuid"`
+	IntegrationKey string `json:"integration_key"`
+	Name           string `json:"name"`
+	IsActive       bool   `json:"is_active"`
+	// Data comes back masked; secrets are never returned.
+	Data            map[string]any `json:"data"`
+	AutomationCount int            `json:"automation_count,omitempty"`
+}
+
+// IntegrationResult is what an integration action returned.
+type IntegrationResult struct {
+	Result map[string]any `json:"result"`
+}
+
+// Automation fires an integration action when an event happens.
+type Automation struct {
+	UUID     string `json:"uuid"`
+	Name     string `json:"name"`
+	IsActive bool   `json:"is_active"`
+	// TriggerEvent is a webhook event type, for example session.completed.
+	TriggerEvent    string         `json:"trigger_event"`
+	ConnectionUUID  string         `json:"connection_uuid"`
+	IntegrationKey  string         `json:"integration_key"`
+	Action          string         `json:"action"`
+	PayloadTemplate map[string]any `json:"payload_template"`
+	Conditions      map[string]any `json:"conditions"`
+}
+
+// AutomationRun is one firing of an automation.
+type AutomationRun struct {
+	EventType  string `json:"event_type"`
+	Status     string `json:"status"`
+	Error      string `json:"error,omitempty"`
+	DurationMs int    `json:"duration_ms"`
+	CreatedAt  string `json:"created_at"`
+}
+
+// AutomationTest is a trial firing: the rendered parameters and the reply.
+type AutomationTest struct {
+	Params map[string]any `json:"params"`
+	Result map[string]any `json:"result"`
+}
+
+// CreditBalance is the organization's prepaid balance.
+type CreditBalance struct {
+	Balance  float64 `json:"balance"`
+	Currency string  `json:"currency"`
+}
+
+// CreditTransaction is one entry in the credit ledger.
+type CreditTransaction struct {
+	Amount       float64 `json:"amount"`
+	Kind         string  `json:"kind"`
+	Description  string  `json:"description"`
+	BalanceAfter float64 `json:"balance_after"`
+	CreatedAt    string  `json:"created_at"`
+}
+
+// UsageSummary is aggregate usage and cost for the organization.
+type UsageSummary struct {
+	TotalUnits  float64 `json:"total_units"`
+	TotalCost   float64 `json:"total_cost"`
+	RecordCount int     `json:"record_count"`
+	Currency    string  `json:"currency"`
+}
+
+// Environment is one of Development, Staging or Production.
+type Environment struct {
+	UUID string `json:"uuid"`
+	// Kind is the stable id to pass to WithEnvironment: dev, staging or prod.
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
+}
+
+// Provider is one entry in the model, transcriber and voice catalog.
+type Provider struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	// ServiceType is llm, stt, tts or realtime.
+	ServiceType  string           `json:"service_type"`
+	DefaultModel string           `json:"default_model"`
+	Models       []map[string]any `json:"models"`
+	Voices       []map[string]any `json:"voices"`
+	Languages    []map[string]any `json:"languages"`
+	// Available reports whether it can be selected; an unavailable provider is
+	// shown as "Soon" rather than hidden.
+	Available bool `json:"available"`
+}
+
+// ProviderResources is one provider's live models and voices.
+type ProviderResources struct {
+	Key          string           `json:"key"`
+	ServiceType  string           `json:"service_type"`
+	DefaultModel string           `json:"default_model"`
+	Source       string           `json:"source"`
+	Models       []map[string]any `json:"models"`
+	Voices       []map[string]any `json:"voices"`
+}
+
+// APIKey is a key for calling this API. The secret is never returned after
+// creation; see CreatedAPIKey.
+type APIKey struct {
+	ID         int      `json:"id"`
+	Name       string   `json:"name"`
+	KeyPrefix  string   `json:"key_prefix"`
+	IsActive   bool     `json:"is_active"`
+	LastUsedAt string   `json:"last_used_at,omitempty"`
+	CreatedAt  string   `json:"created_at,omitempty"`
+	ExpiresAt  string   `json:"expires_at,omitempty"`
+	Scopes     []string `json:"scopes,omitempty"`
+}
+
+// CreatedAPIKey is a newly created key, the one and only time the secret is
+// returned.
+type CreatedAPIKey struct {
+	APIKey
+	Key string `json:"key"`
+}
+
+// Organization is a workspace.
+type Organization struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	// Region is immutable: where this organization's data lives.
+	Region string `json:"region"`
+}
+
+// Region is one deployed stack data can live in.
+type Region struct {
+	Code  string `json:"code"`
+	Label string `json:"label"`
+	// APIBaseURL is empty for the stack you are already talking to.
+	APIBaseURL string `json:"api_base_url"`
 }
 
 // VectorStore is a vector store over knowledge-base documents.

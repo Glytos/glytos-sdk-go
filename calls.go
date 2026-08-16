@@ -59,9 +59,28 @@ func (s *CallsService) WebToken(ctx context.Context, params WebTokenParams) (*We
 	return &out, err
 }
 
-// Control controls an in-progress call (for example transfer or hang up).
+// Control acts on a call that is happening right now.
+//
+// body takes an "action" of "say", "transfer" or "end". A say needs "text", a
+// transfer needs "to_number", and an end needs neither. Prefer the Say, Transfer
+// and End helpers, which spell that out.
 func (s *CallsService) Control(ctx context.Context, callUUID string, body map[string]any) (json.RawMessage, error) {
 	var out json.RawMessage
 	err := s.client.do(ctx, "POST", "/calls/"+esc(callUUID)+"/control", body, nil, &out)
 	return out, err
+}
+
+// Say makes the agent speak a line on a call in progress.
+func (s *CallsService) Say(ctx context.Context, callUUID, text string) (json.RawMessage, error) {
+	return s.Control(ctx, callUUID, map[string]any{"action": "say", "text": text})
+}
+
+// Transfer hands a call in progress to a person.
+func (s *CallsService) Transfer(ctx context.Context, callUUID, toNumber string) (json.RawMessage, error) {
+	return s.Control(ctx, callUUID, map[string]any{"action": "transfer", "to_number": toNumber})
+}
+
+// End hangs up a call in progress.
+func (s *CallsService) End(ctx context.Context, callUUID string) (json.RawMessage, error) {
+	return s.Control(ctx, callUUID, map[string]any{"action": "end"})
 }

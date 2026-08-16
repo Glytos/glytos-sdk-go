@@ -1,6 +1,9 @@
 package glytos
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 // KnowledgeBaseService manages knowledge-base documents and hybrid retrieval search.
 type KnowledgeBaseService struct{ client *Client }
@@ -72,4 +75,16 @@ func (s *KnowledgeBaseService) UploadDocument(ctx context.Context, filename stri
 	var out Document
 	err := s.client.UploadFile(ctx, "/knowledge-base/documents/upload", nil, filename, content, &out)
 	return &out, err
+}
+
+// RetrieveDocument returns one document, including its extracted text.
+func (s *KnowledgeBaseService) RetrieveDocument(ctx context.Context, documentID int) (*Document, error) {
+	var out Document
+	err := s.client.do(ctx, "GET", "/knowledge-base/documents/"+esc(strconv.Itoa(documentID)), nil, nil, &out)
+	return &out, err
+}
+
+// DeleteDocument deletes a document, with its chunks and embeddings.
+func (s *KnowledgeBaseService) DeleteDocument(ctx context.Context, documentID int) error {
+	return s.client.do(ctx, "DELETE", "/knowledge-base/documents/"+esc(strconv.Itoa(documentID)), nil, nil, nil)
 }
