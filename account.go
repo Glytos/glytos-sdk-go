@@ -28,6 +28,21 @@ func (s *TestSuitesService) Create(ctx context.Context, workflowUUID, name strin
 	return &out, err
 }
 
+// TestSuiteUpdate carries the editable parts of a suite. A nil field is left
+// alone; cases are replaced whole rather than merged.
+type TestSuiteUpdate struct {
+	Name         *string          `json:"name,omitempty"`
+	WorkflowUUID *string          `json:"workflow_uuid,omitempty"`
+	Cases        []map[string]any `json:"cases,omitempty"`
+}
+
+// Update renames a suite, repoints it at another agent, or rewrites its cases.
+func (s *TestSuitesService) Update(ctx context.Context, suiteUUID string, body TestSuiteUpdate) (*TestSuite, error) {
+	var out TestSuite
+	err := s.client.do(ctx, "PUT", "/test-suites/"+esc(suiteUUID), body, nil, &out)
+	return &out, err
+}
+
 // Delete removes a suite.
 func (s *TestSuitesService) Delete(ctx context.Context, suiteUUID string) error {
 	return s.client.do(ctx, "DELETE", "/test-suites/"+esc(suiteUUID), nil, nil, nil)
