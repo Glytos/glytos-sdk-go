@@ -1,6 +1,9 @@
 package glytos
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // VectorStoresService manages vector stores over knowledge-base documents.
 type VectorStoresService struct{ client *Client }
@@ -29,6 +32,13 @@ func (s *VectorStoresService) Retrieve(ctx context.Context, vectorStoreUUID stri
 // Delete deletes a vector store.
 func (s *VectorStoresService) Delete(ctx context.Context, vectorStoreUUID string) error {
 	return s.client.do(ctx, "DELETE", "/vector-stores/"+esc(vectorStoreUUID), nil, nil, nil)
+}
+
+// RemoveDocument takes a document out of a store. The document itself is not
+// deleted and stays searchable through the whole knowledge base.
+func (s *VectorStoresService) RemoveDocument(ctx context.Context, vectorStoreUUID string, documentID int) error {
+	path := fmt.Sprintf("/vector-stores/%s/documents/%d", esc(vectorStoreUUID), documentID)
+	return s.client.do(ctx, "DELETE", path, nil, nil, nil)
 }
 
 // UploadDocument adds a document file to a vector store, so an agent can search it.
