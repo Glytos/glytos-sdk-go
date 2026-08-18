@@ -278,6 +278,35 @@ func (c *Client) do(
 	return nil
 }
 
+// doRaw is do for an endpoint that does not answer in JSON. It returns the body
+// verbatim, which is what a CSV export needs: decoding it would fail, and there
+// is nothing to decode it into.
+func (c *Client) doRaw(ctx context.Context, method, path string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("glytos: build request: %w", err)
+	}
+	req.Header.Set("X-API-Key", c.apiKey)
+	if c.environment != "" {
+		req.Header.Set("X-Environment-Id", c.environment)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("glytos: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("glytos: read response: %w", err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, parseError(resp.StatusCode, resp.Header.Get("X-Request-Id"), data)
+	}
+	return data, nil
+}
+
 // encodeQuery renders query values, dropping any with an empty string value so
 // callers can pass optionals freely. It returns "" when nothing remains.
 func encodeQuery(query url.Values) string {

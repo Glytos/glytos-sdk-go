@@ -55,12 +55,31 @@ type SuppressionPreview struct {
 // ContactSyncResult is what adding contacts to a campaign did.
 type ContactSyncResult struct {
 	Added int `json:"added"`
-	// Skipped were already on the list; Rejected held no usable phone number.
-	Skipped  int `json:"skipped"`
-	Rejected int `json:"rejected"`
+	// Skipped were already on the list; Duplicates appeared more than once in
+	// the file; Rejected held no usable phone number.
+	Skipped    int `json:"skipped"`
+	Duplicates int `json:"duplicates"`
+	Rejected   int `json:"rejected"`
 	// PhoneColumn is the column read as the phone number, so a file read from
 	// the wrong one is distinguishable from one that could not be read.
 	PhoneColumn string `json:"phone_column"`
+	// OnDoNotCall is how many of the added contacts are suppressed and so will
+	// never be dialed. Counted at import purely to report it.
+	OnDoNotCall int `json:"on_do_not_call"`
+}
+
+// CampaignUpdateParams are the fields for CampaignsService.Update. Anything left
+// empty is left alone. To remove a schedule entirely use Unschedule: omitting a
+// field and clearing it are different instructions, and only one of them can be
+// expressed by an empty string.
+type CampaignUpdateParams struct {
+	Name string
+	// ScheduledAt is RFC 3339. Changing it is only allowed before the campaign
+	// starts.
+	ScheduledAt     string
+	CallWindowStart string
+	CallWindowEnd   string
+	Timezone        string
 }
 
 // List returns your outbound calling campaigns.
@@ -127,6 +146,62 @@ func (s *CampaignsService) Stop(ctx context.Context, campaignUUID string) (*Camp
 	var out Campaign
 	err := s.client.do(ctx, "POST", "/telephony/campaigns/"+esc(campaignUUID)+"/stop", nil, nil, &out)
 	return &out, err
+}
+
+// Update renames a campaign, or changes when and within what hours it dials.
+//
+// A rename is accepted at any point. The schedule and the calling window can
+// only be changed before the campaign starts: moving the start of one already
+// dialing would say nothing about the calls it has placed.
+func (s *CampaignsService) Update(ctx context.Context, campaignUUID string, params CampaignUpdateParams) (*Campaign, error) {
+	body := map[string]any{}
+	if params.Name != "" {
+		body["name"] = params.Name
+	}
+	if params.ScheduledAt != "" {
+		body["scheduled_at"] = params.ScheduledAt
+	}
+	if params.CallWindowStart != "" {
+		body["call_window_start"] = params.CallWindowStart
+	}
+	if params.CallWindowEnd != "" {
+		body["call_window_end"] = params.CallWindowEnd
+	}
+	if params.Timezone != "" {
+		body["timezone"] = params.Timezone
+	}
+	var out Campaign
+	err := s.client.do(ctx, "PATCH", "/telephony/campaigns/"+esc(campaignUUID), body, nil, &out)
+	return &out, err
+}
+
+// Unschedule clears a campaign's schedule, returning it to a draft that waits
+// for Start.
+func (s *CampaignsService) Unschedule(ctx context.Context, campaignUUID string) (*Campaign, error) {
+	var out Campaign
+	body := map[string]any{"scheduled_at": nil}
+	err := s.client.do(ctx, "PATCH", "/telephony/campaigns/"+esc(campaignUUID), body, nil, &out)
+	return &out, err
+}
+
+// Duplicate copies a campaign and its contact list into a fresh draft. Nothing
+// dials and no outcome is copied, so this is how you run the same list again or
+// reuse a setup against a new one. An empty name keeps the original's, suffixed.
+func (s *CampaignsService) Duplicate(ctx context.Context, campaignUUID, name string) (*Campaign, error) {
+	body := map[string]any{}
+	if name != "" {
+		body["name"] = name
+	}
+	var out Campaign
+	err := s.client.do(ctx, "POST", "/telephony/campaigns/"+esc(campaignUUID)+"/duplicate", body, nil, &out)
+	return &out, err
+}
+
+// Export returns the contacts and what came of each, as CSV: phone, outcome,
+// dialed_at, error, session_uuid. The session uuid joins a result back to the
+// conversation that produced it.
+func (s *CampaignsService) Export(ctx context.Context, campaignUUID string) ([]byte, error) {
+	return s.client.doRaw(ctx, "GET", "/telephony/campaigns/"+esc(campaignUUID)+"/export")
 }
 
 // Delete removes a campaign and its contact list. A running campaign is

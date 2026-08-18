@@ -110,7 +110,7 @@ Returning an error from the callback stops the stream.
 | `client.Calls` | `Create`, `List`, `Retrieve`, `WebToken`, `Control`, `Say`, `Transfer`, `End` |
 | `client.PhoneNumbers` | `Search`, `List`, `Providers`, `Provision`, `ImportNumber`, `Instant`, `Assign`, `Release` |
 | `client.SipTrunks` | `Presets`, `List`, `Create`, `Update`, `Delete`, `Test` |
-| `client.Campaigns` | `List`, `Create`, `Retrieve`, `Start`, `Stop`, `Delete`, `AddContacts`, `SyncContacts`, `PreviewSuppression` |
+| `client.Campaigns` | `List`, `Create`, `Retrieve`, `Update`, `Unschedule`, `Duplicate`, `Export`, `Start`, `Stop`, `Delete`, `AddContacts`, `SyncContacts`, `PreviewSuppression` |
 | `client.Dnc` | `List`, `Add`, `Import`, `SetScope`, `Remove` |
 | `client.Integrations` | `List`, `Run`, `Connections.List`, `Connections.Create`, `Connections.Update`, `Connections.Delete`, `Connections.Run` |
 | `client.Automations` | `List`, `Create`, `Update`, `Delete`, `Runs`, `Test` |

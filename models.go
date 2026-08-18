@@ -82,6 +82,35 @@ type Campaign struct {
 	Timezone               string `json:"timezone,omitempty"`
 	SuppressionPolicy      string `json:"suppression_policy,omitempty"`
 	OverrideCallerRequests bool   `json:"override_caller_requests,omitempty"`
+	// WorkflowName is the agent that does the dialing, named so a row need not
+	// resolve the uuid against the agent list.
+	WorkflowName string `json:"workflow_name,omitempty"`
+	// Counts is how far the campaign has got.
+	Counts CampaignCounts `json:"counts"`
+	// Imported is only set on the create response: what reading the supplied
+	// contact list did.
+	Imported *ContactSyncResult `json:"imported,omitempty"`
+}
+
+// CampaignCounts is how far a campaign has got, sent with every campaign so a
+// row can draw its progress without fetching the contact list to count it.
+type CampaignCounts struct {
+	Total     int `json:"total"`
+	Pending   int `json:"pending"`
+	Dialing   int `json:"dialing"`
+	Answered  int `json:"answered"`
+	Voicemail int `json:"voicemail"`
+	NoAnswer  int `json:"no_answer"`
+	Failed    int `json:"failed"`
+	// Suppressed are on the do-not-call list, so never dialed.
+	Suppressed int `json:"suppressed"`
+	// Dialed were handed to the carrier, including calls still in flight. It
+	// excludes Suppressed.
+	Dialed int `json:"dialed"`
+	// Dialable is what the campaign can ever dial: Total minus Suppressed.
+	// Measure progress against this, not Total, or a finished campaign stops
+	// short of complete by however many numbers were suppressed.
+	Dialable int `json:"dialable"`
 }
 
 // CampaignContact is one dial target and what became of it.

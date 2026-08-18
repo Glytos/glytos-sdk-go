@@ -285,3 +285,96 @@ func TestDncImportReportsWhatItDid(t *testing.T) {
 		t.Fatalf("unexpected result: %+v", result)
 	}
 }
+
+func TestCampaignUpdateSendsOnlyWhatItWasGiven(t *testing.T) {
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"c1","name":"Renamed"}`
+
+	if _, err := ts.client.Campaigns.Update(context.Background(), "c1", CampaignUpdateParams{
+		Name: "Renamed",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if ts.last.method != http.MethodPatch || ts.last.path != "/telephony/campaigns/c1" {
+		t.Fatalf("unexpected request: %s %s", ts.last.method, ts.last.path)
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body) != 1 || body["name"] != "Renamed" {
+		t.Fatalf("update sent more than it was given: %v", body)
+	}
+}
+
+func TestCampaignUnscheduleSendsTheNullAbsenceCannotExpress(t *testing.T) {
+	// Update drops an empty field, so clearing a schedule needs its own call:
+	// omitting a field and setting it to nothing are different instructions.
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"c1","status":"draft"}`
+
+	if _, err := ts.client.Campaigns.Unschedule(context.Background(), "c1"); err != nil {
+		t.Fatal(err)
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	value, present := body["scheduled_at"]
+	if !present || value != nil {
+		t.Fatalf("expected an explicit null schedule, got %v", body)
+	}
+}
+
+func TestCampaignDuplicatePostsToTheCampaignItCopies(t *testing.T) {
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"c2","name":"Second run","status":"draft"}`
+
+	campaign, err := ts.client.Campaigns.Duplicate(context.Background(), "c1", "Second run")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.last.method != http.MethodPost || ts.last.path != "/telephony/campaigns/c1/duplicate" {
+		t.Fatalf("unexpected request: %s %s", ts.last.method, ts.last.path)
+	}
+	if campaign.UUID != "c2" {
+		t.Fatalf("expected the copy, got %q", campaign.UUID)
+	}
+}
+
+func TestCampaignExportReturnsCSVRatherThanFailingToDecodeIt(t *testing.T) {
+	ts := newTestServer(t)
+	csv := "phone,outcome,dialed_at,error,session_uuid\n+905551112233,answered,,,run-1\n"
+	ts.body = csv
+
+	data, err := ts.client.Campaigns.Export(context.Background(), "c1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != csv {
+		t.Fatalf("export did not return the body verbatim: %q", string(data))
+	}
+	if ts.last.path != "/telephony/campaigns/c1/export" {
+		t.Fatalf("unexpected path %q", ts.last.path)
+	}
+}
+
+func TestCampaignCountsDecode(t *testing.T) {
+	ts := newTestServer(t)
+	ts.body = `[{"uuid":"c1","name":"March","workflow_name":"Sales","counts":{"total":10,"suppressed":2,"dialed":5,"answered":3,"dialable":8}}]`
+
+	campaigns, err := ts.client.Campaigns.List(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if campaigns[0].WorkflowName != "Sales" {
+		t.Fatalf("the dialing agent was not carried: %q", campaigns[0].WorkflowName)
+	}
+	// Dialable is the progress denominator, not Total: the two suppressed
+	// numbers will never be dialed.
+	if campaigns[0].Counts.Dialable != 8 || campaigns[0].Counts.Total != 10 {
+		t.Fatalf("unexpected tallies: %+v", campaigns[0].Counts)
+	}
+}
