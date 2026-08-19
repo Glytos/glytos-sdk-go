@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-19
+
 ### Added
 
 - `Campaigns.Update`, `Campaigns.Unschedule`, `Campaigns.Duplicate` and
@@ -16,6 +18,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Campaign` gained `Counts`, `WorkflowName` and `Imported`; `CampaignCounts` is
   new. Measure progress against `Counts.Dialable` rather than `Counts.Total`.
 - `ContactSyncResult` gained `Duplicates` and `OnDoNotCall`.
+
+## [0.4.0] - 2026-08-17
+
+### Added
 
 - `SipTrunks` - connect a carrier directly over SIP, with no third party in
   between: `Presets`, `List`, `Create`, `Update`, `Delete`, `Test`. Numbers are
