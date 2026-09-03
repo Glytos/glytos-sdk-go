@@ -252,6 +252,9 @@ type IntegrationConnection struct {
 	// Data comes back masked; secrets are never returned.
 	Data            map[string]any `json:"data"`
 	AutomationCount int            `json:"automation_count,omitempty"`
+	// NeedsReconnect reports that the customer revoked this OAuth grant. Only
+	// they can restore it, so surface a reconnect rather than retrying.
+	NeedsReconnect bool `json:"needs_reconnect,omitempty"`
 }
 
 // IntegrationResult is what an integration action returned.
