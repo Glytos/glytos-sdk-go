@@ -23,6 +23,11 @@ type ToolCreateParams struct {
 	Config map[string]any
 	// Parameters is the JSON-schema parameter definition.
 	Parameters map[string]any
+	// RunInBackground lets a voice agent keep talking while this tool runs and
+	// share the result when it lands, instead of holding the caller in silence.
+	// Allowed only for the server-side kinds (http, mcp, integration, code), and
+	// takes effect only where the operator has enabled background tools.
+	RunInBackground bool
 }
 
 // ToolUpdateParams are the optional fields for ToolsService.Update. Only the
@@ -33,6 +38,9 @@ type ToolUpdateParams struct {
 	Kind        string
 	Config      map[string]any
 	Parameters  map[string]any
+	// RunInBackground is a pointer because false is a real value here: nil means
+	// "leave it as it is", &false turns it off.
+	RunInBackground *bool
 }
 
 // List returns your saved tools.
@@ -53,6 +61,9 @@ func (s *ToolsService) Create(ctx context.Context, params ToolCreateParams) (*To
 	}
 	if params.Parameters != nil {
 		body["parameters"] = params.Parameters
+	}
+	if params.RunInBackground {
+		body["run_in_background"] = true
 	}
 	var out Tool
 	err := s.client.do(ctx, "POST", "/tools", body, nil, &out)
@@ -76,6 +87,9 @@ func (s *ToolsService) Update(ctx context.Context, toolUUID string, params ToolU
 	}
 	if params.Parameters != nil {
 		body["parameters"] = params.Parameters
+	}
+	if params.RunInBackground != nil {
+		body["run_in_background"] = *params.RunInBackground
 	}
 	var out Tool
 	err := s.client.do(ctx, "PATCH", "/tools/"+esc(toolUUID), body, nil, &out)

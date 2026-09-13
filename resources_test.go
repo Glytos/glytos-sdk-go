@@ -338,3 +338,68 @@ func TestEnvironmentsAndProvidersRead(t *testing.T) {
 		t.Fatalf("query = %q", ts.last.rawQuery)
 	}
 }
+
+func TestBackgroundToolFlagIsSentAndOmitted(t *testing.T) {
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"t1","name":"Legal search","kind":"mcp"}`
+
+	if _, err := ts.client.Tools.Create(context.Background(), ToolCreateParams{
+		Name: "Legal search", Kind: "mcp", RunInBackground: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["run_in_background"] != true {
+		t.Fatalf("run_in_background not sent: %v", body)
+	}
+
+	if _, err := ts.client.Tools.Create(context.Background(), ToolCreateParams{
+		Name: "Order status", Kind: "http",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	body = nil
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if _, sent := body["run_in_background"]; sent {
+		t.Fatalf("run_in_background sent for a foreground tool: %v", body)
+	}
+}
+
+func TestUpdatingLeavesTheBackgroundFlagAloneUnlessSet(t *testing.T) {
+	// A pointer, so turning it OFF is expressible: a plain bool would make "off"
+	// and "not mentioned" the same request.
+	ts := newTestServer(t)
+	ts.body = `{"uuid":"t1","name":"Legal search","kind":"mcp"}`
+
+	if _, err := ts.client.Tools.Update(context.Background(), "t1", ToolUpdateParams{
+		Name: "Renamed",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if _, sent := body["run_in_background"]; sent {
+		t.Fatalf("run_in_background sent when it was not set: %v", body)
+	}
+
+	off := false
+	if _, err := ts.client.Tools.Update(context.Background(), "t1", ToolUpdateParams{
+		RunInBackground: &off,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	body = nil
+	if err := json.Unmarshal(ts.last.body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["run_in_background"] != false {
+		t.Fatalf("run_in_background=false not sent: %v", body)
+	}
+}
